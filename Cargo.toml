@@ -11,6 +11,7 @@ repository = "https://github.com/GuildMasterInfinite/block-compression-rs"
 license = "MIT/Apache-2.0"
 authors = ["Gabriel Majeri <gabriel.majeri6@gmail.com>"]
 
+[badges]
 # Info about CI services.
 travis-ci = { repository = "https://travis-ci.org/GuildMasterInfinite/block-compression-rs/" }
 appveyor = { repository = "https://ci.appveyor.com/project/GuildMasterInfinite/block-compression-rs" }
