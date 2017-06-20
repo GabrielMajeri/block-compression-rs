@@ -4,3 +4,5 @@
 //! ```rust
 //! extern crate block_compression as bc;
 //! ```
+
+mod bc1;
