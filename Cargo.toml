@@ -13,3 +13,4 @@ authors = ["Gabriel Majeri <gabriel.majeri6@gmail.com>"]
 
 # Info about CI services.
 travis-ci = { repository = "https://travis-ci.org/GuildMasterInfinite/block-compression-rs/" }
+codecov = { repository = "https://codecov.io/gh/GuildMasterInfinite/block-compression-rs" }
