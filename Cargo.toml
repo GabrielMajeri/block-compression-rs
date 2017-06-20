@@ -1,0 +1,12 @@
+[package]
+# General package information
+name = "block-compression"
+version = "0.1.0"
+description = "Tools to operate on block compressed (a.k.a. DDS / S3TC) textures."
+keywords = ["texture", "compression", "dds", "bc"]
+categories = ["rendering::data-formats", "game-engines", "multimedia::encoding", "multimedia::images"]
+
+# Information useful for developers.
+repository = "https://github.com/GuildMasterInfinite/block-compression-rs"
+license = "MIT/Apache-2.0"
+authors = ["Gabriel Majeri <gabriel.majeri6@gmail.com>"]
