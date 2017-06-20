@@ -10,3 +10,6 @@ categories = ["rendering::data-formats", "game-engines", "multimedia::encoding",
 repository = "https://github.com/GuildMasterInfinite/block-compression-rs"
 license = "MIT/Apache-2.0"
 authors = ["Gabriel Majeri <gabriel.majeri6@gmail.com>"]
+
+# Info about CI services.
+travis-ci = { repository = "https://travis-ci.org/GuildMasterInfinite/block-compression-rs/" }
