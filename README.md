@@ -1,5 +1,7 @@
 # block-compression
 
+[![Build Status](https://travis-ci.org/GuildMasterInfinite/block-compression-rs.svg?branch=master)](https://travis-ci.org/GuildMasterInfinite/block-compression-rs)
+
 Tools for encoding / decoding block-compression files. 
 
 Block compression is another name for the encoding DDS files use (where it is called DXT - DirectX Texture Compression) and S3TC (S3 Texture Compression).
