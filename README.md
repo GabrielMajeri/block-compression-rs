@@ -1,6 +1,7 @@
 # block-compression
 
 [![Build Status](https://travis-ci.org/GuildMasterInfinite/block-compression-rs.svg?branch=master)](https://travis-ci.org/GuildMasterInfinite/block-compression-rs)
+[![codecov](https://codecov.io/gh/GuildMasterInfinite/block-compression-rs/branch/master/graph/badge.svg)](https://codecov.io/gh/GuildMasterInfinite/block-compression-rs)
 
 Tools for encoding / decoding block-compression files. 
 
