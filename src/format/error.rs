@@ -61,12 +61,4 @@ mod tests {
 
 		let _ = Error::from(err);
 	}
-
-	#[test]
-	#[should_panic]
-	fn from_bincode_unknown_error() {
-		let err = bincode::Error::new(bincode::ErrorKind::Custom("Some error".to_string()));
-
-		let _ = Error::from(err);
-	}
 }
