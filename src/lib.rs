@@ -5,4 +5,13 @@
 //! extern crate block_compression as bc;
 //! ```
 
-mod bc1;
+#![deny(missing_docs)]
+
+/// BC1 stores compressed RGB data, with an optional 1-bit alpha channel.
+///
+/// # Reference
+///
+/// - [DXT1 on Wikipedia](https://en.wikipedia.org/wiki/S3_Texture_Compression#DXT1)
+/// - [BC1 on Microsoft Docs](https://docs.microsoft.com/en-us/windows/uwp/graphics-concepts/block-compression#bc1)
+/// - [Nathan Reed's article](http://reedbeta.com/blog/understanding-bcn-texture-compression-formats/#bc1)
+pub mod bc1;
