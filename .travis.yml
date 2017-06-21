@@ -9,6 +9,7 @@ matrix:
 
 cache: cargo
 
+dist: trusty
 sudo: false
 
 env:
