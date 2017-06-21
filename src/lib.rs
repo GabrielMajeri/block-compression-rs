@@ -7,6 +7,12 @@
 
 #![deny(missing_docs)]
 
+#[macro_use]
+extern crate bitflags;
+
+#[macro_use]
+extern crate serde_derive;
+
 /// BC1 stores compressed RGB data, with an optional 1-bit alpha channel.
 ///
 /// # Reference

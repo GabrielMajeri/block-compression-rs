@@ -16,3 +16,9 @@ authors = ["Gabriel Majeri <gabriel.majeri6@gmail.com>"]
 travis-ci = { repository = "https://travis-ci.org/GuildMasterInfinite/block-compression-rs/" }
 appveyor = { repository = "https://ci.appveyor.com/project/GuildMasterInfinite/block-compression-rs" }
 codecov = { repository = "https://codecov.io/gh/GuildMasterInfinite/block-compression-rs" }
+
+[dependencies]
+bitflags = "0.9.1"
+serde = "^1.0"
+serde_derive = "^1.0"
+bincode = "0.8.0"
