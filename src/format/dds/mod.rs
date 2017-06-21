@@ -162,6 +162,57 @@ mod tests {
 	}
 
 	#[test]
+	fn fail_wrong_size() {
+		#[derive(Serialize)]
+		struct Data {
+			magic: [u8; 4],
+			header: Header
+		}
+
+		let mut hdr: Data = unsafe { mem::zeroed() };
+
+		hdr.magic = *b"DDS ";
+		hdr.header.size = 10;
+
+		let hdr_bound = bincode::Bounded(128);
+
+		{
+			let hdr = bincode::serialize(&hdr, hdr_bound).unwrap();
+
+			let mut hdr_view = &hdr[..];
+
+			let result = read(&mut hdr_view);
+
+			assert!(result.is_err());
+		}
+
+		hdr.header.size = 124;
+		hdr.header.format.size = 32;
+
+		{
+			let hdr = bincode::serialize(&hdr, hdr_bound).unwrap();
+
+			let mut hdr_view = &hdr[..];
+
+			let result = read(&mut hdr_view);
+
+			assert!(result.is_ok());
+		}
+
+		hdr.header.format.size = 31;
+
+		{
+			let hdr = bincode::serialize(&hdr, hdr_bound).unwrap();
+
+			let mut hdr_view = &hdr[..];
+
+			let result = read(&mut hdr_view);
+
+			assert!(result.is_err());
+		}
+	}
+
+	#[test]
 	fn read_uncompressed() {
 		let data_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data");
 		let file_path = data_dir.join("uncomp").join("rust-uncomp-no-mipmaps.dds");
