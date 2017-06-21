@@ -15,3 +15,8 @@
 /// - [BC1 on Microsoft Docs](https://docs.microsoft.com/en-us/windows/uwp/graphics-concepts/block-compression#bc1)
 /// - [Nathan Reed's article](http://reedbeta.com/blog/understanding-bcn-texture-compression-formats/#bc1)
 pub mod bc1;
+
+/// Tools to operate on file formats that store block-compressed data.
+///
+/// This includes file formats such as *.dds, *.ktx.
+pub mod format;
