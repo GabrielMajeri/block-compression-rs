@@ -7,9 +7,14 @@
 
 #![deny(missing_docs)]
 
+// Used in some file formats' headers.
 #[macro_use]
 extern crate bitflags;
 
+// Used for reading / writing the files with the help of structures.
+extern crate bincode;
+
+// Needed for `bincode`.
 #[macro_use]
 extern crate serde_derive;
 

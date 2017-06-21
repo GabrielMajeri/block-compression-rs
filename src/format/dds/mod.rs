@@ -5,6 +5,7 @@
 
 use std::io;
 use std::mem;
+use bincode;
 use super::{Error, Result};
 
 #[repr(C, packed)]
@@ -106,8 +107,6 @@ bitflags! {
 /// Additional features, added by the DirectX 10 DDS format.
 // mod ext;
 
-extern crate bincode;
-
 /// Reads a DDS file.
 pub fn read(reader: &mut io::Read) -> Result<()> {
 	let mut magic_number: [u8; 4] = unsafe { mem::uninitialized() };
@@ -119,7 +118,7 @@ pub fn read(reader: &mut io::Read) -> Result<()> {
 	}
 
 	let limit = bincode::Bounded(mem::size_of::<Header>() as u64);
-	let header: Header = bincode::deserialize_from(reader, limit).unwrap();
+	let header: Header = bincode::deserialize_from(reader, limit)?;
 
 	if header.size as usize != mem::size_of::<Header>() {
 		let msg = format!("Header size mismatch. Expected: {} bytes, found: {} bytes", mem::size_of::<Header>(), header.size);
@@ -143,10 +142,33 @@ mod tests {
 	use std::fs::File;
 
 	#[test]
+	fn fail_magic_number() {
+		let data = "not dds";
+		let mut data_view = data.as_bytes();
+
+		let result = read(&mut data_view);
+
+		assert!(result.is_err());
+	}
+
+	#[test]
+	fn fail_not_enough_data() {
+		let data = "DDS 1234";
+		let mut data_view = data.as_bytes();
+
+		let result = read(&mut data_view);
+
+		assert!(result.is_err());
+	}
+
+	#[test]
 	fn read_uncompressed() {
 		let data_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data");
+		let file_path = data_dir.join("uncomp").join("rust-uncomp-no-mipmaps.dds");
 
-		let mut uncomp_dds = File::open(data_dir.join("uncomp").join("rust-uncomp-no-mipmaps.dds")).unwrap();
-		let _r = read(&mut uncomp_dds).unwrap();
+		let mut uncomp_dds = File::open(file_path).unwrap();
+		let result = read(&mut uncomp_dds);
+
+		assert!(result.is_ok());
 	}
 }
