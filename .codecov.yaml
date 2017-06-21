@@ -1,3 +1,0 @@
-# It's more useful to have codecov report test coverage on the dev branch, instead of the stable `master` branch.
-codecov:
-  branch: develop
