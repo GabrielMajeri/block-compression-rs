@@ -111,7 +111,18 @@ bitflags! {
 /// A texture loaded from a DDS file.
 pub struct Texture {
 	width: u32, height: u32,
+	format: Format,
 	data: Vec<u8>
+}
+
+enum Format {
+	RGB,
+	RGBA,
+	Compressed(BCFormat)
+}
+
+enum BCFormat {
+	BC1
 }
 
 impl Texture {
@@ -167,31 +178,52 @@ pub fn read(reader: &mut io::Read) -> Result<Texture> {
 
 	let width = header.width;
 	let height = header.height;
+	let format;
+	let mut data;
 
 	// Parse the pixel format structure to get information.
 	if pixel_format.flags.intersects(PF_FOUR_CC) {
-		unimplemented!();
+		match &pixel_format.four_cc {
+			b"DXT1" => {
+				format = Format::Compressed(BCFormat::BC1);
+
+				let compressed_data_size = header.pitch_or_linear_size;
+
+				data = Vec::with_capacity(compressed_data_size as usize);
+
+				unsafe {
+					data.set_len(compressed_data_size as usize);
+				}
+
+				reader.read_exact(&mut data)?;
+			},
+			_ => unimplemented!()
+		}
 	} else {
 		let has_alpha = pixel_format.flags.intersects(PF_HAS_ALPHA | PF_ALPHA);
+
+		// TODO: support non-RGB formats.
 		let bpp = if has_alpha { 32 } else { 24 };
+
+		format = if has_alpha { Format::RGB } else { Format::RGBA };
 
 		let data_len = width * height * (bpp / 8);
 
-		let mut data = Vec::with_capacity(data_len as usize);
+		data = Vec::with_capacity(data_len as usize);
 
 		unsafe {
 			data.set_len(data_len as usize);
 		}
 
 		reader.read_exact(&mut data)?;
-
-		let texture = Texture {
-			width, height,
-			data
-		};
-
-		Ok(texture)
 	}
+
+	Ok(Texture {
+		width,
+		height,
+		format,
+		data
+	})
 }
 
 #[cfg(test)]
@@ -264,15 +296,26 @@ mod tests {
 		Path::new(env!("CARGO_MANIFEST_DIR")).join("data")
 	}
 
+	fn read_dds(path: &str) -> Result<Texture> {
+		let file_path = data_dir().join(path);
+		let mut dds = File::open(file_path).unwrap();
+		read(&mut dds)
+	}
+
 	fn read_uncompressed_dds() -> Result<Texture> {
-		let file_path = data_dir().join("uncomp").join("rust-uncomp-no-mipmaps.dds");
-		let mut uncomp_dds = File::open(file_path).unwrap();
-		read(&mut uncomp_dds)
+		read_dds("uncomp/rust-uncomp-no-mipmaps.dds")
 	}
 
 	#[test]
 	fn read_uncompressed() {
 		let result = read_uncompressed_dds();
+
+		assert!(result.is_ok());
+	}
+
+	#[test]
+	fn read_compressed() {
+		let result = read_dds("bc1/rust-bc1-linear-no-mipmaps.dds");
 
 		assert!(result.is_ok());
 	}
