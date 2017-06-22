@@ -22,6 +22,10 @@ extern crate serde_derive;
 #[cfg(test)]
 extern crate image;
 
+mod error;
+
+pub use error::{Error, Result};
+
 /// BC1 stores compressed RGB data, with an optional 1-bit alpha channel.
 ///
 /// # Reference

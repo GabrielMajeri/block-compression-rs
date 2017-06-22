@@ -1,8 +1,9 @@
 use std::io;
+use std::result;
 use std::fmt;
 use bincode;
 
-/// Error type used by the format module.
+/// Error type for the library.
 #[derive(Debug)]
 pub enum Error {
 	/// Some unexpected data was encountered while reading a file.
@@ -10,6 +11,9 @@ pub enum Error {
 	/// An I/O error was encountered while reading / writing an image.
 	IoError(io::Error)
 }
+
+/// Type returned by most of the library's functions.
+pub type Result<T> = result::Result<T, Error>;
 
 impl fmt::Display for Error {
 	fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
