@@ -115,27 +115,36 @@ pub struct Texture {
 	data: Vec<u8>
 }
 
-enum Format {
-	RGB,
-	RGBA,
-	Compressed(BCFormat)
-}
-
-enum BCFormat {
-	BC1
-}
-
 impl Texture {
 	/// Returns the width and height of the texture.
 	pub fn dimensions(&self) -> (u32, u32) {
 		(self.width, self.height)
 	}
 
+	/// Returns the format of the data stored in the texture.
+	pub fn format(&self) -> Format {
+		self.format
+	}
+
 	/// Returns a slice of the raw bytes of the texture.
-	pub fn as_raw(&self) -> &[u8] {
+	pub fn as_bytes(&self) -> &[u8] {
 		&self.data
 	}
 }
+
+use ::BCAlgorithm;
+
+/// The format of the data stored in the texture.
+#[derive(Copy, Clone)]
+pub enum Format {
+	/// Uncompressed format, pixels are red-green-blue tuples, of 1 byte each.
+	RGB,
+	/// Uncompressed format, same as RGB, with an additional alpha component, representing transparency.
+	RGBA,
+	/// Compressed pixels, using some block-compression algorithm.
+	Compressed(BCAlgorithm)
+}
+
 
 /// Additional features, added by the DirectX 10 DDS format.
 // mod ext;
@@ -185,7 +194,7 @@ pub fn read(reader: &mut io::Read) -> Result<Texture> {
 	if pixel_format.flags.intersects(PF_FOUR_CC) {
 		match &pixel_format.four_cc {
 			b"DXT1" => {
-				format = Format::Compressed(BCFormat::BC1);
+				format = Format::Compressed(BCAlgorithm::BC1);
 
 				let compressed_data_size = header.pitch_or_linear_size;
 
@@ -229,8 +238,6 @@ pub fn read(reader: &mut io::Read) -> Result<Texture> {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use std::path::{Path, PathBuf};
-	use std::fs::File;
 
 	#[test]
 	fn fail_magic_number() {
@@ -288,47 +295,5 @@ mod tests {
 
 			assert!(result.is_err());
 		}
-	}
-
-	use ::image;
-
-	fn data_dir() -> PathBuf {
-		Path::new(env!("CARGO_MANIFEST_DIR")).join("data")
-	}
-
-	fn read_dds(path: &str) -> Result<Texture> {
-		let file_path = data_dir().join(path);
-		let mut dds = File::open(file_path).unwrap();
-		read(&mut dds)
-	}
-
-	fn read_uncompressed_dds() -> Result<Texture> {
-		read_dds("uncomp/rust-uncomp-no-mipmaps.dds")
-	}
-
-	#[test]
-	fn read_uncompressed() {
-		let result = read_uncompressed_dds();
-
-		assert!(result.is_ok());
-	}
-
-	#[test]
-	fn read_compressed() {
-		let result = read_dds("bc1/rust-bc1-linear-no-mipmaps.dds");
-
-		assert!(result.is_ok());
-	}
-
-	#[test]
-	#[ignore]
-	fn read_uncompressed_to_bmp() {
-		let texture = read_uncompressed_dds().unwrap();
-
-		let mut output = File::create(&Path::new("test.bmp")).unwrap();
-
-		let mut bmp = image::bmp::BMPEncoder::new(&mut output);
-
-		let _ = bmp.encode(&texture.data, texture.width, texture.height, image::ColorType::RGBA(8)).unwrap();
 	}
 }
