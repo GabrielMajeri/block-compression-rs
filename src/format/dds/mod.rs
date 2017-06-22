@@ -100,7 +100,29 @@ struct PixelFormat {
 bitflags! {
 	#[derive(Serialize, Deserialize)]
 	struct PixelFormatFlags: u32 {
-		const HAS_ALPHA = 0x1;
+		const PF_HAS_ALPHA = 0x1;
+		// Older flag, should not be used. Preffer PF_HAS_ALPHA instead.
+		const PF_ALPHA = 0x2;
+		const PF_FOUR_CC = 0x4;
+		const PF_RGB = 0x40;
+	}
+}
+
+/// A texture loaded from a DDS file.
+pub struct Texture {
+	width: u32, height: u32,
+	data: Vec<u8>
+}
+
+impl Texture {
+	/// Returns the width and height of the texture.
+	pub fn dimensions(&self) -> (u32, u32) {
+		(self.width, self.height)
+	}
+
+	/// Returns a slice of the raw bytes of the texture.
+	pub fn as_raw(&self) -> &[u8] {
+		&self.data
 	}
 }
 
@@ -108,17 +130,28 @@ bitflags! {
 // mod ext;
 
 /// Reads a DDS file.
-pub fn read(reader: &mut io::Read) -> Result<()> {
-	let mut magic_number: [u8; 4] = unsafe { mem::uninitialized() };
+pub fn read(reader: &mut io::Read) -> Result<Texture> {
+	{
+		let mut magic_number: [u8; 4] = unsafe { mem::uninitialized() };
 
-	reader.read_exact(&mut magic_number)?;
+		reader.read_exact(&mut magic_number)?;
 
-	if magic_number != *b"DDS " {
-		return Err(Error::FormatError("DDS magic number not found".to_string()));
+		if magic_number != *b"DDS " {
+			return Err(Error::FormatError("DDS magic number not found".to_string()));
+		}
 	}
 
-	let limit = bincode::Bounded(mem::size_of::<Header>() as u64);
-	let header: Header = bincode::deserialize_from(reader, limit)?;
+	let header: Header;
+
+	{
+		// Since bincode does not fail if there is not data in the reader, we must read the buffer beforehand
+		// and then ask bincode to deserialize it.
+		let mut buf = [0u8; 124];
+
+		reader.read_exact(&mut buf)?;
+
+		header = bincode::deserialize(&buf)?;
+	}
 
 	if header.size as usize != mem::size_of::<Header>() {
 		let msg = format!("Header size mismatch. Expected: {} bytes, found: {} bytes", mem::size_of::<Header>(), header.size);
@@ -132,7 +165,33 @@ pub fn read(reader: &mut io::Read) -> Result<()> {
 		return Err(Error::FormatError(msg));
 	}
 
-	Ok(())
+	let width = header.width;
+	let height = header.height;
+
+	// Parse the pixel format structure to get information.
+	if pixel_format.flags.intersects(PF_FOUR_CC) {
+		unimplemented!();
+	} else {
+		let has_alpha = pixel_format.flags.intersects(PF_HAS_ALPHA | PF_ALPHA);
+		let bpp = if has_alpha { 32 } else { 24 };
+
+		let data_len = width * height * (bpp / 8);
+
+		let mut data = Vec::with_capacity(data_len as usize);
+
+		unsafe {
+			data.set_len(data_len as usize);
+		}
+
+		reader.read_exact(&mut data)?;
+
+		let texture = Texture {
+			width, height,
+			data
+		};
+
+		Ok(texture)
+	}
 }
 
 #[cfg(test)]
@@ -186,8 +245,7 @@ mod tests {
 			assert!(result.is_err());
 		}
 
-		hdr.header.size = 124;
-		hdr.header.format.size = 32;
+		hdr.header.format.size = 31;
 
 		{
 			let hdr = bincode::serialize(&hdr, hdr_bound).unwrap();
@@ -196,10 +254,10 @@ mod tests {
 
 			let result = read(&mut hdr_view);
 
-			assert!(result.is_ok());
+			assert!(result.is_err());
 		}
+	}
 
-		hdr.header.format.size = 31;
 
 		{
 			let hdr = bincode::serialize(&hdr, hdr_bound).unwrap();
