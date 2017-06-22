@@ -197,7 +197,7 @@ pub fn read(reader: &mut io::Read) -> Result<Texture> {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use std::path::Path;
+	use std::path::{Path, PathBuf};
 	use std::fs::File;
 
 	#[test]
@@ -258,26 +258,34 @@ mod tests {
 		}
 	}
 
+	use ::image;
 
-		{
-			let hdr = bincode::serialize(&hdr, hdr_bound).unwrap();
+	fn data_dir() -> PathBuf {
+		Path::new(env!("CARGO_MANIFEST_DIR")).join("data")
+	}
 
-			let mut hdr_view = &hdr[..];
-
-			let result = read(&mut hdr_view);
-
-			assert!(result.is_err());
-		}
+	fn read_uncompressed_dds() -> Result<Texture> {
+		let file_path = data_dir().join("uncomp").join("rust-uncomp-no-mipmaps.dds");
+		let mut uncomp_dds = File::open(file_path).unwrap();
+		read(&mut uncomp_dds)
 	}
 
 	#[test]
 	fn read_uncompressed() {
-		let data_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data");
-		let file_path = data_dir.join("uncomp").join("rust-uncomp-no-mipmaps.dds");
-
-		let mut uncomp_dds = File::open(file_path).unwrap();
-		let result = read(&mut uncomp_dds);
+		let result = read_uncompressed_dds();
 
 		assert!(result.is_ok());
+	}
+
+	#[test]
+	#[ignore]
+	fn read_uncompressed_to_bmp() {
+		let texture = read_uncompressed_dds().unwrap();
+
+		let mut output = File::create(&Path::new("test.bmp")).unwrap();
+
+		let mut bmp = image::bmp::BMPEncoder::new(&mut output);
+
+		let _ = bmp.encode(&texture.data, texture.width, texture.height, image::ColorType::RGBA(8)).unwrap();
 	}
 }

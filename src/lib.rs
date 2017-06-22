@@ -18,6 +18,10 @@ extern crate bincode;
 #[macro_use]
 extern crate serde_derive;
 
+// Some unit tests use this crate.
+#[cfg(test)]
+extern crate image;
+
 /// BC1 stores compressed RGB data, with an optional 1-bit alpha channel.
 ///
 /// # Reference
