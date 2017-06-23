@@ -100,25 +100,78 @@ struct PixelFormat {
 bitflags! {
 	#[derive(Serialize, Deserialize)]
 	struct PixelFormatFlags: u32 {
-		const HAS_ALPHA = 0x1;
+		const PF_HAS_ALPHA = 0x1;
+		// Older flag, should not be used. Preffer PF_HAS_ALPHA instead.
+		const PF_ALPHA = 0x2;
+		const PF_FOUR_CC = 0x4;
+		const PF_RGB = 0x40;
 	}
 }
+
+/// A texture loaded from a DDS file.
+pub struct Texture {
+	width: u32, height: u32,
+	format: Format,
+	data: Vec<u8>
+}
+
+impl Texture {
+	/// Returns the width and height of the texture.
+	pub fn dimensions(&self) -> (u32, u32) {
+		(self.width, self.height)
+	}
+
+	/// Returns the format of the data stored in the texture.
+	pub fn format(&self) -> Format {
+		self.format
+	}
+
+	/// Returns a slice of the raw bytes of the texture.
+	pub fn as_bytes(&self) -> &[u8] {
+		&self.data
+	}
+}
+
+use ::BCAlgorithm;
+
+/// The format of the data stored in the texture.
+#[derive(Copy, Clone)]
+pub enum Format {
+	/// Uncompressed format, pixels are red-green-blue tuples, of 1 byte each.
+	RGB,
+	/// Uncompressed format, same as RGB, with an additional alpha component, representing transparency.
+	RGBA,
+	/// Compressed pixels, using some block-compression algorithm.
+	Compressed(BCAlgorithm)
+}
+
 
 /// Additional features, added by the DirectX 10 DDS format.
 // mod ext;
 
 /// Reads a DDS file.
-pub fn read(reader: &mut io::Read) -> Result<()> {
-	let mut magic_number: [u8; 4] = unsafe { mem::uninitialized() };
+pub fn read(reader: &mut io::Read) -> Result<Texture> {
+	{
+		let mut magic_number: [u8; 4] = unsafe { mem::uninitialized() };
 
-	reader.read_exact(&mut magic_number)?;
+		reader.read_exact(&mut magic_number)?;
 
-	if magic_number != *b"DDS " {
-		return Err(Error::FormatError("DDS magic number not found".to_string()));
+		if magic_number != *b"DDS " {
+			return Err(Error::FormatError("DDS magic number not found".to_string()));
+		}
 	}
 
-	let limit = bincode::Bounded(mem::size_of::<Header>() as u64);
-	let header: Header = bincode::deserialize_from(reader, limit)?;
+	let header: Header;
+
+	{
+		// Since bincode does not fail if there is not data in the reader, we must read the buffer beforehand
+		// and then ask bincode to deserialize it.
+		let mut buf = [0u8; 124];
+
+		reader.read_exact(&mut buf)?;
+
+		header = bincode::deserialize(&buf)?;
+	}
 
 	if header.size as usize != mem::size_of::<Header>() {
 		let msg = format!("Header size mismatch. Expected: {} bytes, found: {} bytes", mem::size_of::<Header>(), header.size);
@@ -132,14 +185,59 @@ pub fn read(reader: &mut io::Read) -> Result<()> {
 		return Err(Error::FormatError(msg));
 	}
 
-	Ok(())
+	let width = header.width;
+	let height = header.height;
+	let format;
+	let mut data;
+
+	// Parse the pixel format structure to get information.
+	if pixel_format.flags.intersects(PF_FOUR_CC) {
+		match &pixel_format.four_cc {
+			b"DXT1" => {
+				format = Format::Compressed(BCAlgorithm::BC1);
+
+				let compressed_data_size = header.pitch_or_linear_size;
+
+				data = Vec::with_capacity(compressed_data_size as usize);
+
+				unsafe {
+					data.set_len(compressed_data_size as usize);
+				}
+
+				reader.read_exact(&mut data)?;
+			},
+			_ => unimplemented!()
+		}
+	} else {
+		let has_alpha = pixel_format.flags.intersects(PF_HAS_ALPHA | PF_ALPHA);
+
+		// TODO: support non-RGB formats.
+		let bpp = if has_alpha { 32 } else { 24 };
+
+		format = if has_alpha { Format::RGB } else { Format::RGBA };
+
+		let data_len = width * height * (bpp / 8);
+
+		data = Vec::with_capacity(data_len as usize);
+
+		unsafe {
+			data.set_len(data_len as usize);
+		}
+
+		reader.read_exact(&mut data)?;
+	}
+
+	Ok(Texture {
+		width,
+		height,
+		format,
+		data
+	})
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use std::path::Path;
-	use std::fs::File;
 
 	#[test]
 	fn fail_magic_number() {
@@ -186,19 +284,6 @@ mod tests {
 			assert!(result.is_err());
 		}
 
-		hdr.header.size = 124;
-		hdr.header.format.size = 32;
-
-		{
-			let hdr = bincode::serialize(&hdr, hdr_bound).unwrap();
-
-			let mut hdr_view = &hdr[..];
-
-			let result = read(&mut hdr_view);
-
-			assert!(result.is_ok());
-		}
-
 		hdr.header.format.size = 31;
 
 		{
@@ -210,16 +295,5 @@ mod tests {
 
 			assert!(result.is_err());
 		}
-	}
-
-	#[test]
-	fn read_uncompressed() {
-		let data_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("data");
-		let file_path = data_dir.join("uncomp").join("rust-uncomp-no-mipmaps.dds");
-
-		let mut uncomp_dds = File::open(file_path).unwrap();
-		let result = read(&mut uncomp_dds);
-
-		assert!(result.is_ok());
 	}
 }

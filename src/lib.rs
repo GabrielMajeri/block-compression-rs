@@ -18,6 +18,19 @@ extern crate bincode;
 #[macro_use]
 extern crate serde_derive;
 
+/// Enum containing all supported block-compression algorithms.
+#[derive(Copy, Clone)]
+pub enum BCAlgorithm {
+	/// Block compression 1, stores RGB data, with an optional 1-bit alpha.
+	/// This is the recommended format for most textures, providing best compression,
+	/// while the others should be used in special cases, as documented.
+	BC1
+}
+
+mod error;
+
+pub use error::{Error, Result};
+
 /// BC1 stores compressed RGB data, with an optional 1-bit alpha channel.
 ///
 /// # Reference
