@@ -27,10 +27,11 @@
 //! Block structure:
 //!
 //! ```rust,no_run
+//! # struct R5G6B5(u16);
 //! #[repr(C)]
 //! struct Block {
-//! 	color0: R5-G6-B5,
-//! 	color1: R5-G6-B5,
+//! 	color0: R5G6B5,
+//! 	color1: R5G6B5,
 //! 	indices: u32
 //! }
 //! ```
