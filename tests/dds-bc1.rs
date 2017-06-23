@@ -7,7 +7,7 @@ use std::fs::File;
 use bc::format::dds::Texture;
 
 fn read_dds(path: &str) -> bc::Result<Texture> {
-	let file_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("data").join(path);
+	let file_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests").join("data").join(path);
 	let mut dds = File::open(file_path).unwrap();
 	bc::format::dds::read(&mut dds)
 }
