@@ -1,4 +1,4 @@
-# block-compression
+# 🗜️ block-compression
 
 [![Build Status](https://travis-ci.org/GuildMasterInfinite/block-compression-rs.svg?branch=master)](https://travis-ci.org/GuildMasterInfinite/block-compression-rs)
 [![Build status](https://ci.appveyor.com/api/projects/status/ycp5ilof3fwe6mew?svg=true)](https://ci.appveyor.com/project/GuildMasterInfinite/block-compression-rs)
