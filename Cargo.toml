@@ -6,6 +6,11 @@ description = "Tools to operate on block compressed (a.k.a. DDS / S3TC) textures
 keywords = ["texture", "compression", "dds", "bc"]
 categories = ["rendering::data-formats", "game-engines", "multimedia::encoding", "multimedia::images"]
 
+exclude = [
+	# The tests contain the images, which are pretty big, so they should not be packaged with the crate.
+	"tests/**"
+]
+
 # Information useful for developers.
 repository = "https://github.com/GuildMasterInfinite/block-compression-rs"
 license = "MIT/Apache-2.0"
