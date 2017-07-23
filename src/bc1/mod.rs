@@ -71,7 +71,9 @@ impl Block {
 			c2 = R8G8B8(lerp(r0, r1), lerp(g0, g1), lerp(b0, b1));
 			c3 = R8G8B8(lerp(r1, r0), lerp(g1, g0), lerp(b1, b0));
 		} else {
-			c2 = R8G8B8((r0 + r1) / 2, (g0 + g1) / 2, (b0 + b1) / 2);
+			let avg = |el0, el1| ((el0 as u16 + el1 as u16) / 2) as u8;
+
+			c2 = R8G8B8(avg(r0, r1), avg(g0, g1), avg(b0, b1));
 			c3 = R8G8B8(0, 0, 0);
 		}
 
