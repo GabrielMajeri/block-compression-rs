@@ -8,5 +8,15 @@ matrix:
   allow_failures:
     - rust: nightly
 
+addons:
+  apt:
+    sources:
+    - sourceline: 'ppa:git-core/ppa'
+    packages:
+    - git-lfs
+
+install:
+  git lfs install
+
 cache:
   - cargo
